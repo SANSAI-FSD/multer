@@ -2,6 +2,8 @@ import express from "express";
 const router = express.Router();
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import upload from "../middlewares/uploadMiddleware.js";
+
 
 router.get("/api/users/", async (req, res) => {
   try {
@@ -71,25 +73,50 @@ router.delete("/api/users/:id", async (req, res) => {
   }
 });
 
-router.post("/api/users/", async (req, res) => {
+// router.post("/api/users/", async (req, res) => {
+//   const { username, password, biodata, jobRole } = req.body;
+//   console.log(req.body);
+//   try {
+//     const salt = await bcrypt.genSalt(10);
+//     const hashedPassword = await bcrypt.hash(password, salt);
+
+//     const newUser = new User({
+//       username,
+//       password: hashedPassword,
+//       biodata,
+//       jobRole,
+//     });
+//     const savedUser = await newUser.save();
+//     res.status(200).json(savedUser);
+//   } catch (error) {
+//     res.status(400).json({ message: ` Error creating a new user : ${error}` });
+//   }
+// });
+
+router.post("/api/users/", upload.single("image"), async (req, res) => {
   const { username, password, biodata, jobRole } = req.body;
-  console.log(req.body);
+
   try {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    const imagePath = req.file ? `/uploads/${req.file.filename}` : "";
 
     const newUser = new User({
       username,
       password: hashedPassword,
       biodata,
       jobRole,
+      image: imagePath,
     });
+
     const savedUser = await newUser.save();
     res.status(200).json(savedUser);
   } catch (error) {
-    res.status(400).json({ message: ` Error creating a new user : ${error}` });
+    res.status(400).json({ message: `Error creating a new user: ${error}` });
   }
 });
+
 
 router.post("/api/users/login", async (req, res) => {
   try {
